@@ -3,14 +3,21 @@
 
 <head>
     <title>Braineffect - Challenge</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description" content="Braineffect blog post about lorem ipsum">
+    <meta name="keywords" content="Braineffect, lorem ipsum">
+    <meta name="author" content="Braineffect">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter&family=Roboto&display=swap" rel="stylesheet">
 
     <style>
         body {
             background-color: #f1f1f1;
-            font-family: "Roboto";
+            font-family: "Inter";
             padding: 0;
             margin: 0;
         }
@@ -27,6 +34,14 @@
             padding: 0 2rem;
             color: #000;
             font-size: large;
+        }
+        
+        .active {
+            font-weight: 800;
+        }
+        
+        .navbar a:hover {
+            font-weight: 800;
         }
         
         main {
@@ -73,19 +88,46 @@
     </style>
 
     <script>
+        let isRead = false
         let processScroll = () => {
             let docElem = document.documentElement,
                 docBody = document.body,
                 scrollTop = docElem['scrollTop'] || docBody['scrollTop'],
                 scrollBottom = (docElem['scrollHeight'] || docBody['scrollHeight']) - window.innerHeight,
-                scrollPercent = scrollTop / scrollBottom * 100 + '%';
+                scrollPercent = scrollTop / scrollBottom * 100 + '%'
 
-            // console.log(scrollTop + ' / ' + scrollBottom + ' / ' + scrollPercent);
+            //console.log(scrollTop + ' / ' + scrollBottom + ' / ' + scrollPercent)
 
-            document.getElementById("progress-value").style.setProperty("--scroll-amount", scrollPercent);
+            if (scrollTop === scrollBottom) getReadingTime()
+            document.getElementById("progress-value").style.setProperty("--scroll-amount", scrollPercent)
+        }
+        document.addEventListener('scroll', processScroll)
+
+        let startTime
+        fetch("http://localhost:8087/api/start")
+            .then(res => res.json())
+            .then(data => {
+                console.log(data.first_salutation_time)
+                startTime = data.first_salutation_time
+            })
+
+        let getReadingTime = () => {
+            fetch("http://localhost:8087/api/finish")
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data.total_reading_time)
+                    calcReadingTime(data.total_reading_time)
+                })
         }
 
-        document.addEventListener('scroll', processScroll);
+        let calcReadingTime = (milli) => {
+            let totalReadingTime = milli - startTime
+            let hour = Math.floor(totalReadingTime / 3600)
+            let min = Math.floor((totalReadingTime - hour) / 60)
+            let sec = Math.floor((totalReadingTime - hour - min))
+
+            console.log("You spend " + hour + " hours, " + min + " minutes and " + sec + " seconds reading this article.")
+        }
     </script>
 </head>
 
@@ -96,7 +138,7 @@
 
             <nav>
                 <a href="#">HOME</a>
-                <a href="#">BLOG</a>
+                <a href="#" class="active">BLOG</a>
                 <a href="#">SHOP</a>
             </nav>
         </div>
@@ -106,8 +148,6 @@
     </div>
     <main>
         <div class="article">
-
-
 
             <h1>HTML Ipsum Presents</h1>
 

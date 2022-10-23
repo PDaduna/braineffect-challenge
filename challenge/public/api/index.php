@@ -27,7 +27,64 @@ $errorMiddleware = $app->addErrorMiddleware(true, true, true);
  * Find below an example of a GET endpoint that uses redis to temporarily store a name,
  * and cookies to keep track of an event date and time.
  */
+$app->get('/start', function (Request $request, Response $response, $args) {
 
+    // Redis usage example:
+    /** @var \Predis\Client $redisClient */
+    $redisClient = $this->get('redisClient');
+    $oldName = $redisClient->get('name');
+    if (is_string($oldName)) {
+        $name = $oldName;
+    } else {
+        $redisClient->set('name', $args['name'], 'EX', 10);
+        $name = $args['name'];
+    }
+
+    // Setting a cookie example:
+    $cookieValue = '';
+    if (empty($_COOKIE["FirstSalutationTime"])) {
+        $cookieName = "FirstSalutationTime";
+        $cookieValue = (string)time();
+        $expires = time() + 60 * 60 * 24 * 30; // 30 days.
+        setcookie($cookieName, $cookieValue, $expires, '/');
+    }
+
+    // Response example:
+    $response->getBody()->write(json_encode([
+        'first_salutation_time' => $_COOKIE["FirstSalutationTime"] ?? $cookieValue,
+    ], JSON_THROW_ON_ERROR));
+
+    return $response->withHeader('Content-Type', 'application/json');
+});
+$app->get('/finish', function (Request $request, Response $response, $args) {
+
+    // Redis usage example:
+    /** @var \Predis\Client $redisClient */
+    $redisClient = $this->get('redisClient');
+    $oldName = $redisClient->get('name');
+    if (is_string($oldName)) {
+        $name = $oldName;
+    } else {
+        $redisClient->set('name', $args['name'], 'EX', 10);
+        $name = $args['name'];
+    }
+
+    // Setting a cookie example:
+    $cookieValue = '';
+    if (empty($_COOKIE["FinishedReadingTime"])) {
+        $cookieName = "FinishedReadingTime";
+        $cookieValue = (string)time();
+        $expires = time() + 60 * 60 * 24 * 30; // 30 days.
+        setcookie($cookieName, $cookieValue, $expires, '/');
+    }
+
+    // Response example:
+    $response->getBody()->write(json_encode([
+        'total_reading_time' => $_COOKIE["FinishedReadingTime"] ?? $cookieValue,
+    ], JSON_THROW_ON_ERROR));
+
+    return $response->withHeader('Content-Type', 'application/json');
+});
 $app->get('/hello/{name}', function (Request $request, Response $response, $args) {
 
     // Redis usage example:
