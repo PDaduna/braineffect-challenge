@@ -86,7 +86,7 @@
             width: var(--scroll-amount);
         }
     </style>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         let isRead = false
         let processScroll = () => {
@@ -103,12 +103,19 @@
         }
         document.addEventListener('scroll', processScroll)
 
-        let startTime
+        let startTimestamp, startDate, endTimestamp, endDate
         fetch("http://localhost:8087/api/start")
             .then(res => res.json())
             .then(data => {
                 console.log(data.first_salutation_time)
-                startTime = data.first_salutation_time
+                let date = new Date(data.first_salutation_time * 1000).toLocaleTimeString('en-SG', {
+                    timeZone: 'Asia/Singapore'
+                })
+                let day = new Date(data.first_salutation_time * 1000).toDateString()
+                startDate = day + " - " + date
+                console.log(day, date);
+
+                startTimestamp = data.first_salutation_time
             })
 
         let getReadingTime = () => {
@@ -116,17 +123,30 @@
                 .then(res => res.json())
                 .then(data => {
                     console.log(data.total_reading_time)
+                    let date = new Date(data.total_reading_time * 1000).toLocaleTimeString('en-SG', {
+                        timeZone: 'Asia/Singapore'
+                    })
+                    let day = new Date(data.total_reading_time * 1000).toDateString()
+                    endDate = day + " - " + date
+                    console.log(day, date);
+
+                    endTimestamp = data.first_salutation_time
                     calcReadingTime(data.total_reading_time)
                 })
         }
 
         let calcReadingTime = (milli) => {
-            let totalReadingTime = milli - startTime
+            let totalReadingTime = milli - startTimestamp
             let hour = Math.floor(totalReadingTime / 3600)
             let min = Math.floor((totalReadingTime - hour) / 60)
             let sec = Math.floor((totalReadingTime - hour - min))
 
             console.log("You spend " + hour + " hours, " + min + " minutes and " + sec + " seconds reading this article.")
+
+            swal({
+                title: "Congratulation",
+                text: "You started at: " + startDate + "\n" + "You finshed at: " + endDate + "\n\n You spend " + hour + " hours, " + min + " minutes and " + sec + " seconds reading this article.",
+            })
         }
     </script>
 </head>
