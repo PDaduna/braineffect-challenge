@@ -27,7 +27,36 @@ $errorMiddleware = $app->addErrorMiddleware(true, true, true);
  * Find below an example of a GET endpoint that uses redis to temporarily store a name,
  * and cookies to keep track of an event date and time.
  */
-$app->get('/start', function (Request $request, Response $response, $args) {
+$app->get('/progress/{progress}', function (Request $request, Response $response, $args) {
+    $scrollPos = $args['progress'];
+
+    // Setting a cookie example:
+    $cookieValue = '';
+        $cookieName = "ReadingProgress";
+        $cookieValue = $scrollPos;
+        $expires = time() + 60 * 60 * 24 * 30; // 30 days.
+        setcookie($cookieName, $cookieValue, $expires, '/');
+
+    // Response example:
+    $response->getBody()->write(json_encode([
+        'reading_progress' => $_COOKIE["ReadingProgress"] ?? $cookieValue,
+    ], JSON_THROW_ON_ERROR));
+
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+$app->get('/progress', function (Request $request, Response $response, $args) {
+
+    // Response example:
+    $response->getBody()->write(json_encode([
+        
+        'reading_progress' => $_COOKIE["ReadingProgress"] ?? $cookieValue,
+    ], JSON_THROW_ON_ERROR));
+
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+ $app->get('/start', function (Request $request, Response $response, $args) {
 
     // Redis usage example:
     /** @var \Predis\Client $redisClient */

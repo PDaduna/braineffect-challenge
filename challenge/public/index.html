@@ -88,7 +88,24 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
+        window.onload = () => {
+            fetch("http://localhost:8087/api/progress")
+                .then(res => res.json())
+                .then(data => {
+                    window.scrollTo({
+                        top: data.reading_progress,
+                        behavior: "smooth"
+                    })
+                })
+        }
+        let scrollPosition
+        document.onbeforeunload = function() {
+            return saveProgress(scrollPosition)
+        }
+
+
         let isRead = false
+        let oldScrollTop = 0
         let processScroll = () => {
             let docElem = document.documentElement,
                 docBody = document.body,
@@ -96,9 +113,19 @@
                 scrollBottom = (docElem['scrollHeight'] || docBody['scrollHeight']) - window.innerHeight,
                 scrollPercent = scrollTop / scrollBottom * 100 + '%'
 
-            //console.log(scrollTop + ' / ' + scrollBottom + ' / ' + scrollPercent)
+            console.log(scrollTop + ' / ' + scrollBottom + ' / ' + scrollPercent)
+
+            if (oldScrollTop + 50 < scrollTop) {
+                console.log("meep")
+                    //saveProgress(scrollTop)
+                fetch("http://localhost:8087/api/progress/" + scrollTop)
+
+                oldScrollTop = scrollTop
+            }
 
             if (scrollTop === scrollBottom) getReadingTime()
+            scrollPosition = scrollTop
+
             document.getElementById("progress-value").style.setProperty("--scroll-amount", scrollPercent)
         }
         document.addEventListener('scroll', processScroll)
@@ -107,13 +134,13 @@
         fetch("http://localhost:8087/api/start")
             .then(res => res.json())
             .then(data => {
-                console.log(data.first_salutation_time)
+                //console.log(data.first_salutation_time)
                 let date = new Date(data.first_salutation_time * 1000).toLocaleTimeString('en-SG', {
                     timeZone: 'Asia/Singapore'
                 })
                 let day = new Date(data.first_salutation_time * 1000).toDateString()
                 startDate = day + " - " + date
-                console.log(day, date);
+                    //console.log(day, date);
 
                 startTimestamp = data.first_salutation_time
             })
@@ -122,29 +149,34 @@
             fetch("http://localhost:8087/api/finish")
                 .then(res => res.json())
                 .then(data => {
-                    console.log(data.total_reading_time)
+                    //console.log(data.total_reading_time)
                     let date = new Date(data.total_reading_time * 1000).toLocaleTimeString('en-SG', {
                         timeZone: 'Asia/Singapore'
                     })
                     let day = new Date(data.total_reading_time * 1000).toDateString()
                     endDate = day + " - " + date
-                    console.log(day, date);
+                        //console.log(day, date);
 
-                    endTimestamp = data.first_salutation_time
+                    endTimestamp = data.total_reading_time
                     calcReadingTime(data.total_reading_time)
                 })
+        }
+
+        let saveProgress = (progress) => {
+            fetch("http://localhost:8087/api/progress/" + progress)
+
         }
 
         let calcReadingTime = (milli) => {
             let totalReadingTime = milli - startTimestamp
             let hour = Math.floor(totalReadingTime / 3600)
             let min = Math.floor((totalReadingTime - hour) / 60)
-            let sec = Math.floor((totalReadingTime - hour - min))
+            let sec = Math.floor((totalReadingTime - hour - min) % 60)
 
             console.log("You spend " + hour + " hours, " + min + " minutes and " + sec + " seconds reading this article.")
 
             swal({
-                title: "Congratulation",
+                title: "Great!",
                 text: "You started at: " + startDate + "\n" + "You finshed at: " + endDate + "\n\n You spend " + hour + " hours, " + min + " minutes and " + sec + " seconds reading this article.",
             })
         }
